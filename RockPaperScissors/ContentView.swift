@@ -9,14 +9,21 @@ import SwiftUI
 
 struct ContentView: View {
     
-    @State private var responseOptions = ["🪨 Rock", "📄 Paper", "✂️ Scissors"]
+    private let responseOptions = ["🪨 Rock", "📄 Paper", "✂️ Scissors"]
+    private let responseLabels = ["🪨", "📄", "✂️"]
     @State private var cpuResponse = Int.random(in: 0...2)
     @State private var playerObjective = Bool.random()
     
     @State private var showingAlert: Bool = false
     @State private var alertTitle: String = ""
+    @State private var alertMessage: String = ""
     
-    var roundCount: Int = 0
+    @State private var roundCount: Int = 0
+    @State private var score: Int = 0
+    
+    var isGameOver: Bool {
+        roundCount >= 9
+    }
     
     var body: some View {
         
@@ -49,8 +56,10 @@ struct ContentView: View {
                         }
                     }
                     
-                    Text("Which option do you pick? 🤔")
+                    Text("Which option do you pick?")
                     
+                    // Buttons with text
+                    /*
                     VStack(spacing: 10) {
                         ForEach(0...2, id: \.self) { number in
                             Button {
@@ -66,31 +75,60 @@ struct ContentView: View {
                             
                         }
                     }
+                    */
                     
-                    
+                    HStack(spacing: 10) {
+                        ForEach(0...2, id: \.self) { number in
+                            Button {
+                                responseTapped(number)
+                            } label: {
+                                Text(responseLabels[number])
+                                    .font(.largeTitle.weight(.bold))
+                                    .padding(8)
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.cyan)
+                        }
+                    }
                 }
+                
                 .frame(maxWidth: 300)
                 .padding(25)
                 .background(.regularMaterial)
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .shadow(radius: 10)
                 
+                Text("Score: \(score)")
+                    .foregroundColor(.white)
+                    .font(.body.bold())
+                    .padding(.top, 30)
+                
                 Spacer()
             }
             .padding()
         }
         .alert(alertTitle, isPresented: $showingAlert) {
-            Button("Continue") {
-                nextRound()
+            Button(isGameOver ? "New Game" : "Continue") {
+                continueTapped()
             }
+        } message: {
+            Text(alertMessage)
         }
     }
     
     func responseTapped(_ number: Int) {
         if (playerObjective == didPlayerWin(cpuResponse: cpuResponse, playerResponse: number)) {
+            score += 1
             alertTitle = "Correct!"
         } else {
+            score -= 1
             alertTitle = "Incorrect"
+        }
+        
+        if (isGameOver) {
+            alertMessage = "Your final score is \(score)"
+        } else {
+            alertMessage = "Your score is \(score)"
         }
         
         showingAlert = true
@@ -99,14 +137,23 @@ struct ContentView: View {
     func didPlayerWin(cpuResponse: Int, playerResponse: Int) -> Bool {
         if (playerResponse == 0 && cpuResponse == 2) {
             return true
+        } else if (playerResponse == 2 && cpuResponse == 0) {
+            return false
         } else {
             return playerResponse > cpuResponse
         }
     }
     
-    func nextRound() {
+    func continueTapped() {
         cpuResponse = Int.random(in: 0...2)
         playerObjective = Bool.random()
+        
+        if (isGameOver) {
+            roundCount = 0
+            score = 0
+        } else {
+            roundCount += 1
+        }
     }
 }
 
